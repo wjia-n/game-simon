@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 
 /// Phases owned entirely by the engine. The UI only renders.
 enum SimonPhase {
