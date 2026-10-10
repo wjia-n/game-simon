@@ -62,7 +62,7 @@ class SimonSettings extends ChangeNotifier {
   int padStyle = 0;
   int difficulty = 1; // classic default
   int mode = 0; // solo default
-  bool isPro = false;
+  bool isPro = true; // everything unlocked — no Pro version
   int gamesPlayed = 0;
   int bestSolo = 0;
   int bestEndless = 0;
@@ -126,7 +126,7 @@ class SimonSettings extends ChangeNotifier {
     padStyle = (p.getInt(_kPadStyle) ?? 0).clamp(0, 7);
     difficulty = (p.getInt(_kDifficulty) ?? 1).clamp(0, 2);
     mode = (p.getInt(_kMode) ?? 0).clamp(0, 2);
-    isPro = p.getBool(_kIsPro) ?? false;
+    isPro = true; // everything unlocked
     gamesPlayed = p.getInt(_kGames) ?? 0;
     bestSolo = p.getInt(_kBestSolo) ?? 0;
     bestEndless = p.getInt(_kBestEndless) ?? 0;

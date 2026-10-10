@@ -33,26 +33,10 @@ class _ProScreenState extends State<ProScreen> {
   @override
   void initState() {
     super.initState();
-    widget.store.proPurchased.addListener(_onPro);
     widget.store.lastThanks.addListener(_onThanks);
   }
 
-  void _onPro() {
-    if (widget.store.proPurchased.value && mounted) {
-      widget.settings.setPro(true);
-      widget.audio.win();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('PRO unlocked — enjoy everything!',
-              style: TextStyle(color: _t.text, fontSize: 15)),
-          backgroundColor: _t.cabinetDeep,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      widget.store.proPurchased.value = false;
-    }
-  }
-
+  
   void _onThanks() {
     final msg = widget.store.lastThanks.value;
     if (msg == null || !mounted) return;
@@ -69,7 +53,6 @@ class _ProScreenState extends State<ProScreen> {
 
   @override
   void dispose() {
-    widget.store.proPurchased.removeListener(_onPro);
     widget.store.lastThanks.removeListener(_onThanks);
     super.dispose();
   }
@@ -106,16 +89,7 @@ class _ProScreenState extends State<ProScreen> {
                   const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
               child: Column(
                 children: [
-                  _ComparisonCard(theme: t, isPro: s.isPro),
-                  const SizedBox(height: 16),
-                  _BuyCard(
-                    theme: t,
-                    settings: s,
-                    store: store,
-                    audio: widget.audio,
-                  ),
-                  const SizedBox(height: 16),
-                  _TipsCard(
+                                    _TipsCard(
                     theme: t,
                     store: store,
                     audio: widget.audio,
@@ -133,111 +107,6 @@ class _ProScreenState extends State<ProScreen> {
 
 // ---------------------------------------------------------------------------
 /// Free vs Pro comparison table — buyers see the big difference.
-class _ComparisonCard extends StatelessWidget {
-  final SimonThemeDef theme;
-  final bool isPro;
-  const _ComparisonCard({required this.theme, required this.isPro});
-
-  @override
-  Widget build(BuildContext context) {
-    const rows = [
-      ('Complete Simon game', true, true),
-      ('All official rules', true, true),
-      ('Solo & Endless modes', true, true),
-      ('Chill & Classic speeds', true, true),
-      ('Renameable player profile', true, true),
-      ('Music & sound effects', true, true),
-      ('Cabinet themes', '4', '12+'),
-      ('Pad styles', '4', '8'),
-      ('Custom theme creator', false, true),
-      ('Turbo difficulty', false, true),
-      ('Score Attack mode', false, true),
-    ];
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: Colors.black.withValues(alpha: 0.35),
-        border: Border.all(color: theme.accent, width: 2),
-      ),
-      child: Column(
-        children: [
-          Text('Free vs PRO',
-              style: TextStyle(
-                  color: theme.text,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 20)),
-          const SizedBox(height: 4),
-          Text(
-            'One purchase. Yours forever.',
-            style: TextStyle(
-                color: theme.muted, fontSize: 13),
-          ),
-          const SizedBox(height: 12),
-          // Header row.
-          Row(
-            children: [
-              const Expanded(flex: 5, child: SizedBox()),
-              Expanded(
-                  flex: 2,
-                  child: Text('FREE',
-                      style: TextStyle(
-                          color: theme.muted,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 12),
-                      textAlign: TextAlign.center)),
-              Expanded(
-                  flex: 2,
-                  child: Text('PRO',
-                      style: TextStyle(
-                          color: theme.accent,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 12),
-                      textAlign: TextAlign.center)),
-            ],
-          ),
-          Divider(height: 14, color: theme.accent.withValues(alpha: 0.3)),
-          for (final r in rows)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 5),
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 5,
-                    child: Text(r.$1,
-                        style: TextStyle(
-                            color: theme.text, fontSize: 13)),
-                  ),
-                  Expanded(flex: 2, child: _Cell(value: r.$2, theme: theme)),
-                  Expanded(flex: 2, child: _Cell(value: r.$3, theme: theme)),
-                ],
-              ),
-            ),
-          if (isPro)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
-                  color: theme.accent.withValues(alpha: 0.25),
-                  border: Border.all(color: theme.accent),
-                ),
-                child: Text('✦ PRO ACTIVE ✦',
-                    style: TextStyle(
-                        color: theme.accent,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 14)),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
 class _Cell extends StatelessWidget {
   final Object value; // bool | String
   final SimonThemeDef theme;
@@ -266,103 +135,6 @@ class _Cell extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-class _BuyCard extends StatelessWidget {
-  final SimonThemeDef theme;
-  final SimonSettings settings;
-  final StoreService store;
-  final SimonAudio audio;
-  const _BuyCard({
-    required this.theme,
-    required this.settings,
-    required this.store,
-    required this.audio,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final pro = store.proProduct;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: Colors.black.withValues(alpha: 0.35),
-        border: Border.all(color: theme.accent, width: 2),
-      ),
-      child: Column(
-        children: [
-          Text('Unlock PRO',
-              style: TextStyle(
-                  color: theme.text,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 20)),
-          const SizedBox(height: 8),
-          if (settings.isPro)
-            Text('You already own PRO — thank you!',
-                style: TextStyle(color: theme.text, fontSize: 14),
-                textAlign: TextAlign.center)
-          else if (!store.storeReady)
-            Text(
-              store.error ?? 'Available after store setup.',
-              style: TextStyle(
-                  color: theme.muted, fontSize: 14),
-              textAlign: TextAlign.center,
-            )
-          else if (pro != null) ...[
-            Text(pro.description.isNotEmpty
-                ? pro.description
-                : 'Unlock everything in Simon, forever.',
-                style: TextStyle(color: theme.text, fontSize: 14),
-                textAlign: TextAlign.center),
-            const SizedBox(height: 12),
-            ValueListenableBuilder<bool>(
-              valueListenable: store.purchaseInProgress,
-              builder: (_, busy, _) => ArcadeButton(
-                label: busy ? 'Working…' : 'Get PRO — ${pro.price}',
-                theme: theme,
-                primary: true,
-                width: 260,
-                onTap: busy
-                    ? () {}
-                    : () {
-                        audio.click();
-                        store.buyPro();
-                      },
-              ),
-            ),
-          ],
-          ValueListenableBuilder<String?>(
-            valueListenable: store.purchaseError,
-            builder: (_, err, _) => err == null
-                ? const SizedBox.shrink()
-                : Padding(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: Text(err,
-                        style: const TextStyle(
-                            color: Color(0xFFE08A8A), fontSize: 13),
-                        textAlign: TextAlign.center),
-                  ),
-          ),
-          const SizedBox(height: 10),
-          TextButton(
-            onPressed: () {
-              audio.click();
-              store.restore();
-            },
-            child: Text('Restore purchases',
-                style: TextStyle(
-                    color: theme.accent,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-/// Consumable tips — pure support, with real store prices.
 class _TipsCard extends StatelessWidget {
   final SimonThemeDef theme;
   final StoreService store;
