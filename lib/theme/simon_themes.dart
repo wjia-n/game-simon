@@ -181,7 +181,7 @@ class SimonThemes {
     ),
     SimonThemeDef(
       id: 'arctic',
-      name: 'Arctic Hut',
+      name: 'Frosty Hut',
       pro: true,
       cabinetDeep: Color(0xFF0B1418),
       cabinet: Color(0xFF16242B),

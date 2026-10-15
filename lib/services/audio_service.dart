@@ -17,6 +17,9 @@ import 'package:audioplayers/audioplayers.dart';
 ///   resumes exactly where it left off instead of restarting or dying.
 /// - Every public method catches player errors; audio can never crash the app.
 class SimonAudio {
+  /// Per-game pitch character (simon): 1.31x. Makes SFX unique.
+  static const double _pitchMul = 1.310;
+
   static const int _rate = 22050;
   final AudioPlayer _sfx = AudioPlayer();
   final AudioPlayer _music = AudioPlayer();
@@ -106,6 +109,8 @@ class SimonAudio {
 
   List<double> _tone(double freq, double secs,
       {double freqEnd = 0, double attack = 0.02, double harmonics = 0.25}) {
+    freq *= _pitchMul;
+    freqEnd *= _pitchMul;
     final n = (_rate * secs).round();
     final out = List<double>.filled(n, 0);
     for (int i = 0; i < n; i++) {
@@ -169,73 +174,51 @@ class SimonAudio {
       _cache.putIfAbsent(key, () => _wav(build()));
 
   Uint8List _menuBytes() => _clip('music_menu', () {
-        // Playful C – F – G – Am pads with a bouncy marimba-ish melody, 16s.
-        final chords = [
-          [261.63, 329.63, 392.0], // C
-          [349.23, 440.0, 523.25], // F
-          [392.0, 493.88, 587.33], // G
-          [220.0, 261.63, 329.63], // Am
+        // E waltz 5 – 3 – 0 – 4, 12s loop. Unique to simon.
+        final seq = [
+          [277.18, 329.63, 415.31],
+          [220.00, 277.18, 329.63],
+          [164.81, 207.65, 246.94],
+          [246.94, 311.13, 370.00]
         ];
         final out = <double>[];
-        for (final chord in chords) {
-          out.addAll(_padChord(chord, 4.0));
-        }
-        final melody = [
-          523.25, 659.25, 783.99, 659.25, 698.46, 880.0, 783.99, 659.25,
-          523.25, 587.33, 659.25, 523.25, 440.0, 523.25, 659.25, 523.25,
-        ];
-        final n = (_rate * 16).round();
-        final res = List<double>.from(out);
-        for (int k = 0; k < melody.length; k++) {
-          final start = (n * k / melody.length).round();
-          final tone = _tone(melody[k], 0.4, harmonics: 0.4);
-          for (int i = 0; i < tone.length && start + i < n; i++) {
-            res[start + i] += tone[i] * 0.28;
-          }
-        }
-        return res;
-      });
-
-  Uint8List _gameBytes() => _clip('music_game', () {
-        // Driving 8th-note pulse: bass pump + soft ticks + sparse lead, 12s.
-        final n = (_rate * 12).round();
-        final out = List<double>.filled(n, 0);
-        final bpm = 118.0;
-        final beat = 60.0 / bpm;
-        final roots = [130.81, 130.81, 98.0, 110.0]; // C2 C2 G2 A2
-        final totalBeats = (12.0 / beat).floor();
-        for (int b = 0; b < totalBeats; b++) {
-          final root = roots[(b ~/ 4) % roots.length];
-          final start = (_rate * b * beat).round();
-          // Bass pump on the beat.
-          final bass = _tone(root, 0.22, harmonics: 0.35);
-          for (int i = 0; i < bass.length && start + i < n; i++) {
-            out[start + i] += bass[i] * 0.5;
-          }
-          // Soft tick off-beat.
-          final tickStart = (_rate * (b * beat + beat / 2)).round();
-          final tickLen = (_rate * 0.03).round();
-          for (int i = 0; i < tickLen && tickStart + i < n; i++) {
-            out[tickStart + i] +=
-                (_rand.nextDouble() * 2 - 1) * exp(-i / (_rate * 0.008)) * 0.12;
-          }
-          // Sparse pluck lead every 4 beats.
-          if (b % 4 == 0) {
-            final lead = [523.25, 587.33, 659.25, 783.99][(b ~/ 4) % 4];
-            final tone = _tone(lead, 0.5, harmonics: 0.4);
-            for (int i = 0; i < tone.length && start + i < n; i++) {
-              out[start + i] += tone[i] * 0.2;
-            }
-          }
-        }
-        // Gentle master envelope to avoid clicks at the loop point.
-        final fade = (_rate * 0.15).round();
-        for (int i = 0; i < fade; i++) {
-          out[i] *= i / fade;
-          out[n - 1 - i] *= i / fade;
+        for (final chord in seq) {
+          // Waltz: bass on 1, chords on 2 and 3
+          final bass = _tone(chord[0] / 2, 0.8, harmonics: 0.3);
+          final ch1 = _padChord([chord[1], chord[2]], 0.7);
+          final ch2 = _padChord([chord[1], chord[2]], 0.7);
+          out.addAll(bass);
+          final gap1 = List<double>.filled((_rate * 0.2).round(), 0);
+          out.addAll(gap1);
+          out.addAll(ch1);
+          final gap2 = List<double>.filled((_rate * 0.2).round(), 0);
+          out.addAll(gap2);
+          out.addAll(ch2);
+          final gap3 = List<double>.filled((_rate * 0.2).round(), 0);
+          out.addAll(gap3);
         }
         return out;
       });
+
+
+  Uint8List _gameBytes() => _clip('music_game', () {
+        // E arpeggiated 5 – 3 – 0 – 4, 16s loop. Unique to simon.
+        final notes = [277.18, 329.63, 415.31, 329.63, 220.00, 277.18, 329.63, 277.18, 164.81, 207.65, 246.94, 207.65, 246.94, 311.13, 370.00, 311.13];
+        final out = <double>[];
+        final noteLen = 16.0 / notes.length;
+        for (final n in notes) {
+          out.addAll(_tone(n, noteLen * 0.9, harmonics: 0.3));
+          final gap = List<double>.filled((_rate * noteLen * 0.1).round(), 0);
+          out.addAll(gap);
+        }
+        // Soft pad underneath
+        final pad = _padChord([277.18, 329.63, 415.31], 16.0);
+        for (int i = 0; i < out.length && i < pad.length; i++) {
+          out[i] += pad[i] * 0.3;
+        }
+        return out;
+      });
+
 
   // ------------------------------------------------------------------ SFX
   Future<void> _play(Uint8List bytes) async {
