@@ -6,6 +6,7 @@ import '../theme/simon_themes.dart';
 import 'custom_theme_screen.dart';
 import 'pro_screen.dart';
 import 'widgets.dart';
+import '../transfer/transfer_ui.dart';
 
 /// Settings: renameable player profile, audio, themes, pad styles, custom
 /// theme creator (Pro).
@@ -283,6 +284,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+              TransferSaveTile(gameSlug: 'simon'),
                 // Mini 2x2 pad preview.
                 SizedBox(
                   width: 52,
