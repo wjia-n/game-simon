@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import '../services/audio_service.dart';
@@ -103,7 +104,7 @@ class MenuScreen extends StatelessWidget {
                             ),
                           );
                         }),
-                        _menuChip(theme, '⭐', settings.isPro ? 'PRO ✓' : 'Get PRO', () {
+                        _menuChip(theme, '⭐', defaultTargetPlatform == TargetPlatform.iOS ? '⭐ Gold Star' : (settings.isPro ? 'PRO ✓' : 'Get PRO'), () {
                           audio.click();
                           Navigator.of(context).push(
                             MaterialPageRoute(
